@@ -64,8 +64,7 @@ public class SwitchViewController : MonoBehaviour
         else
         {
             // 第三人称位置：角色背后一定距离和高度
-            thirdPersonController.transform.position = firstPersonController.transform.position -
-                Vector3.up * thirdPersonHeight;
+            thirdPersonController.transform.position = firstPersonController.transform.position;
             thirdPersonController.transform.rotation = firstPersonController.transform.rotation;
 
             firstPersonController.SetActive(false);
