@@ -72,8 +72,6 @@ public class SwitchViewController : MonoBehaviour
             cameraRigMainCamera.gameObject.SetActive(true);
             minimapController.SetPlayerTarget(thirdPersonController.transform);
         }
-
-        Debug.Log(isFirstPerson ? "切换到第一人称视角" : "切换到第三人称视角");
     }
 
 }

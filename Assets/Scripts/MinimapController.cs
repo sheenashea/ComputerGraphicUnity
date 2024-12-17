@@ -32,7 +32,6 @@ public class MinimapController : MonoBehaviour
         if (newPlayer != null)
         {
             player = newPlayer;
-            Debug.Log("小地图摄像机追踪目标已更改！");
         }
         else
         {

@@ -39,8 +39,6 @@ public class ForegroundTransparency : MonoBehaviour
             Color newColor = foregroundImage.color; // 获取当前颜色
             newColor.a = currentTransparency;       // 修改透明度
             foregroundImage.color = newColor;       // 应用修改后的颜色
-
-            Debug.Log($"当前透明度: {currentTransparency}");
         }
     }
 }
