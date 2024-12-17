@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.AI;
@@ -8,7 +10,9 @@ public class navMove : MonoBehaviour
     public Transform[] targetPositions; // 存储 4 个目标点
     public string[] destinationNames = { "家", "公司", "图书馆", "银行" }; // 目标点名称
 
-    public LineRenderer lineRenderer;
+    public LineRenderer fullLineRenderer;    // 用于渲染完整路径的 LineRenderer
+    public LineRenderer partialLineRenderer; // 用于渲染 5 米直线的 LineRenderer
+    public GuideController guideController;
 
     // UI 元素
     public Text destinationText; // 目标点名称
@@ -33,12 +37,6 @@ public class navMove : MonoBehaviour
             return;
         }
 
-        if (lineRenderer == null)
-        {
-            Debug.LogError("LineRenderer 组件未设置！");
-            return;
-        }
-
         ResetUI();
     }
 
@@ -56,14 +54,16 @@ public class navMove : MonoBehaviour
         // 更新路径线和 UI
         if (!hasArrived) // 在未到达目标时更新
         {
-            SetPosition();
-            UpdateUI(GetCurrentTargetIndex());
+            if (guideController.isNavLineActive)
+            {
+                RenderFullPath();
+            }
+            else
+            {
+                RenderPartialPath();
+            }
+            UpdateUI(curIdx);
         }
-    }
-
-    int GetCurrentTargetIndex()
-    {
-        return curIdx;
     }
 
 
@@ -86,17 +86,78 @@ public class navMove : MonoBehaviour
     }
 
     // 更新 LineRenderer 显示路径
-    void SetPosition()
+    void RenderFullPath()
     {
         if (navmesh.path.corners != null && navmesh.path.corners.Length > 0)
         {
-            lineRenderer.positionCount = navmesh.path.corners.Length;
+            fullLineRenderer.positionCount = navmesh.path.corners.Length;
             for (int i = 0; i < navmesh.path.corners.Length; i++)
             {
-                lineRenderer.SetPosition(i, navmesh.path.corners[i]);
+                fullLineRenderer.SetPosition(i, navmesh.path.corners[i]);
             }
         }
     }
+
+    // 十字路口部分 begin
+    void RenderPartialPath()
+    {
+        // 检测附近 20 米范围内是否有交通信号灯
+        if (!IsTrafficLightNearby(20f))
+        {
+            // 没有检测到交通信号灯，清空渲染
+            partialLineRenderer.positionCount = 0;
+            return;
+        }
+
+        // 检测到交通信号灯，继续渲染逻辑
+        if (navmesh.path == null || navmesh.path.corners.Length < 2)
+        {
+            partialLineRenderer.positionCount = 0; // 没有足够路径点时，清空路径
+            return;
+        }
+
+        Vector3 currentPosition = transform.position;
+        Vector3 nextCorner = navmesh.path.corners[1]; // 路径的第一个拐点
+
+        // 计算当前位置到第一个路径点之间的方向和距离
+        Vector3 direction = (nextCorner - currentPosition).normalized;
+        float distanceToNextCorner = Vector3.Distance(currentPosition, nextCorner);
+
+        // 限制渲染距离为 5 米
+        float renderDistance = Mathf.Min(5f, distanceToNextCorner);
+        Vector3 renderEndPoint = currentPosition + direction * renderDistance;
+
+        // 设置 LineRenderer 渲染 5 米直线
+        partialLineRenderer.positionCount = 2;
+        partialLineRenderer.SetPosition(0, currentPosition);
+        partialLineRenderer.SetPosition(1, renderEndPoint);
+
+        Debug.Log("检测到交通信号灯，渲染前方 5 米直线");
+    }
+
+    /// <summary>
+    /// 检测附近范围内是否存在交通信号灯
+    /// </summary>
+    /// <param name="radius">检测半径</param>
+    /// <returns>是否有交通信号灯</returns>
+    bool IsTrafficLightNearby(float radius)
+    {
+        // 获取范围内的所有碰撞体
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, radius);
+        foreach (Collider collider in hitColliders)
+        {
+            // 判断碰撞体是否是交通信号灯（通过 Tag 或 Layer）
+            if (collider.CompareTag("traffic_light")) // 需要为交通灯对象设置 Tag
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
+    // 十字路口部分 end
 
     // 检查是否到达目标点
     void CheckArrival()
@@ -106,7 +167,8 @@ public class navMove : MonoBehaviour
             navmesh.isStopped = true; // 停止导航
             hasArrived = true;
 
-            lineRenderer.positionCount = 0; // 清空路径
+            fullLineRenderer.positionCount = 0; // 清空路径
+            partialLineRenderer.positionCount = 0;
 
             distanceText.text = "距离: 已到达目标";
             etaText.text = "预计时间: --";
