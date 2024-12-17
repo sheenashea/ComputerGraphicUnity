@@ -7,15 +7,15 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Crazyminds.AwesomeMask
+namespace Crazyminds.AwesomeMask 
 {
 	[AddComponentMenu("UI/CrazyMinds/AwesomeMaskHollow")]
 	[DisallowMultipleComponent]
 	public class AwesomeMaskHollow : Image
 	{
-		protected override void Reset()
+		protected void Reset()
 		{
-			base.Reset();
+			// base.Reset();
 		}
 	}
 }

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class GuideController : MonoBehaviour
 {
-    public GameObject navLine;         // 连贯导航线对象
+    public GameObject navLine;         // 连贯导线对象
     public GameObject lineSign;        // 指示路标对象
     public GameObject compassUI;       // 指南针 UI 对象
     public Text guideModeText;         // 文本控件，显示当前导航模式
@@ -60,7 +60,7 @@ public class GuideController : MonoBehaviour
         if (lineSign != null) lineSign.SetActive(false);
         if (compassUI != null) compassUI.SetActive(false);
 
-        UpdateGuideModeText("连贯导航线");
+        UpdateGuideModeText("连贯导线");
     }
 
     // 显示指示路标，隐藏其他 UI

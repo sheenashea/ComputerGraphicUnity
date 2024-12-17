@@ -117,22 +117,46 @@ public class navMove : MonoBehaviour
         }
 
         Vector3 currentPosition = transform.position;
-        Vector3 nextCorner = navmesh.path.corners[1]; // 路径的第一个拐点
+        float remainingDistance = 15f; // 最大渲染距离 15 米
+        float accumulatedDistance = 0f; // 已累加的距离
 
-        // 计算当前位置到第一个路径点之间的方向和距离
-        Vector3 direction = (nextCorner - currentPosition).normalized;
-        float distanceToNextCorner = Vector3.Distance(currentPosition, nextCorner);
+        Vector3 nextCorner = navmesh.path.corners[1];
 
-        // 限制渲染距离为 5 米
-        float renderDistance = Mathf.Min(5f, distanceToNextCorner);
-        Vector3 renderEndPoint = currentPosition + direction * renderDistance;
+        // 开始渲染
+        List<Vector3> renderPoints = new List<Vector3> { currentPosition };
 
-        // 设置 LineRenderer 渲染 5 米直线
-        partialLineRenderer.positionCount = 2;
-        partialLineRenderer.SetPosition(0, currentPosition);
-        partialLineRenderer.SetPosition(1, renderEndPoint);
+        // 遍历路径点，计算累加路径长度
+        for (int i = 1; i < navmesh.path.corners.Length; i++)
+        {
+            Vector3 start = navmesh.path.corners[i - 1];
+            Vector3 end = navmesh.path.corners[i];
 
-        Debug.Log("检测到交通信号灯，渲染前方 5 米直线");
+            // 计算当前路径段的长度
+            float segmentDistance = Vector3.Distance(start, end);
+
+            // 判断是否超过剩余的渲染距离
+            if (accumulatedDistance + segmentDistance >= remainingDistance)
+            {
+                // 计算部分路径点（截断当前段以满足 5 米的限制）
+                float ratio = (remainingDistance - accumulatedDistance) / segmentDistance;
+                Vector3 partialPoint = Vector3.Lerp(start, end, ratio);
+                renderPoints.Add(partialPoint);
+                break;
+            }
+            else
+            {
+                // 当前路径段完全包含在 5 米内
+                renderPoints.Add(end);
+                accumulatedDistance += segmentDistance;
+            }
+        }
+
+        // 更新 LineRenderer 渲染
+        partialLineRenderer.positionCount = renderPoints.Count;
+        for (int i = 0; i < renderPoints.Count; i++)
+        {
+            partialLineRenderer.SetPosition(i, renderPoints[i]);
+        }
     }
 
     /// <summary>
